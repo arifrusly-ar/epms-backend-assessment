@@ -63,6 +63,8 @@ public class ProjectMemberService {
         //establish relationship
         member.setProject(project);
 
+        member.setAppUser(user);
+
         ProjectMember savedMember = projectMemberRepository.save(member);
 
         return mapToResponse(savedMember);

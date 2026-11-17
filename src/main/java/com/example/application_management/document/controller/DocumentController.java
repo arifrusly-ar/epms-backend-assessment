@@ -5,6 +5,8 @@ import com.example.application_management.document.enums.DocumentStatus;
 import com.example.application_management.document.service.DocumentService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,7 +44,7 @@ public class DocumentController {
 
     //@PreAuthorize("hasAnyRole('PROJECT_MANAGER', 'ADMIN')")
     @PreAuthorize(
-            "hasAnyRole('PROJECT_MANAGER', 'ADMIN')" +
+            "hasAnyRole('PROJECT_MANAGER', 'ADMIN') " +
                     "and @projectPermission.canApprove(#projectId, authentication)"
     )
     @PostMapping("/{documentId}/approve")
@@ -103,13 +105,47 @@ public class DocumentController {
 //
 //    }
 
-    @GetMapping
-    public ResponseEntity<Page<DocumentResponse>> getDocumentsByProject(@PathVariable Long projectId,
-            @RequestParam(required = false) DocumentStatus status, Pageable pageable) {
+//    @GetMapping
+//    public ResponseEntity<Page<DocumentResponse>> getDocumentsByProject(@PathVariable Long projectId,
+//            @RequestParam(required = false) DocumentStatus status, Pageable pageable) {
+//
+//        return ResponseEntity.ok(documentService.getDocumentsByProject(projectId, status,
+//                pageable));
+//    }
 
-        return ResponseEntity.ok(documentService.getDocumentsByProject(projectId, status,
-                pageable));
+
+    @GetMapping
+    public ResponseEntity<Page<DocumentResponse>> getDocumentsByProject(
+
+            // ID project yang ingin mendapatkan senarai documents
+            @PathVariable Long projectId,
+
+            // Optional filter berdasarkan document status
+            // Contoh: DRAFT, SUBMITTED, APPROVED
+            @RequestParam(required = false) DocumentStatus status,
+
+            // Page bermula daripada 0
+            // page=0 bermaksud page pertama
+            @RequestParam(defaultValue = "0") int page) {
+
+        // Pastikan page tidak menerima nombor negatif
+        if (page < 0) {
+            throw new IllegalArgumentException("Page number cannot be negative");
+        }
+
+        // Tetapkan maksimum 10 records bagi setiap page
+        // Susun mengikut ID supaya pagination konsisten
+        Pageable pageable = PageRequest.of(page, 10, Sort.by(Sort.Direction.ASC, "id"));
+
+        // Panggil service yang sudah mempunyai
+        // @Transactional(readOnly = true)
+        Page<DocumentResponse> documents =
+                documentService.getDocumentsByProject(projectId, status, pageable);
+
+        // Return paginated result kepada client
+        return ResponseEntity.ok(documents);
     }
+
 
     @PutMapping("/{documentId}")
     public ResponseEntity<DocumentResponse> updateDocument(@PathVariable Long projectId,

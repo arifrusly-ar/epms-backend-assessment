@@ -7,7 +7,7 @@ import com.example.application_management.security.repository.AppUserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-@Service
+@Service("projectPermission")
 public class ProjectPermissionService {
 
     private final AppUserRepository userRepository;
